@@ -46,9 +46,16 @@ class BannerAd(context: Context, attrs: AttributeSet) : LinearLayout(context, at
             mediationType
         )
         if (bannerAd != null) {
-            val sandboxedSdkView = SandboxedSdkView(context)
-            addViewToLayout(sandboxedSdkView)
-            sandboxedSdkView.setAdapter(bannerAd)
+            val displayMetrics = context.resources.displayMetrics
+            this.layoutParams = LayoutParams(displayMetrics.widthPixels, displayMetrics.heightPixels)
+            this.removeAllViews()
+            val containerLayout = inflate(context, R.layout.ssv_container, null).apply {
+                val sandboxedSdkView = SandboxedSdkView(context)
+                sandboxedSdkView.layoutParams = LayoutParams(displayMetrics.widthPixels, displayMetrics.heightPixels)
+                addView(sandboxedSdkView)
+                sandboxedSdkView.setAdapter(bannerAd)
+            }
+            this.addView(containerLayout)
             return
         }
 
@@ -81,7 +88,8 @@ class BannerAd(context: Context, attrs: AttributeSet) : LinearLayout(context, at
 
     private fun addViewToLayout(view: View) {
         removeAllViews()
-        view.layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+        val displayMetrics = context.resources.displayMetrics
+        view.layoutParams = LayoutParams(displayMetrics.widthPixels, displayMetrics.heightPixels)
         super.addView(view)
     }
 }

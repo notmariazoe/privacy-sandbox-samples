@@ -15,12 +15,20 @@
  */
 package com.runtimeenabled.implementation
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
+import android.util.Log
 import android.view.View
+import android.webkit.CookieManager
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
+import android.webkit.WebSettings
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.privacysandbox.sdkruntime.core.activity.ActivityHolder
@@ -79,8 +87,11 @@ class SdkSandboxedUiAdapterImpl(
         clientExecutor: Executor,
         client: SandboxedUiAdapter.SessionClient
     ) {
-        val session = SdkUiSession(clientExecutor, sdkContext, request, mediateeAdapter)
+        val session = SdkUiSession(clientExecutor, sdkContext, request, mediateeAdapter, client)
         clientExecutor.execute {
+            Log.d("RE_SDK", "Session opened")
+            Log.d("RE_SDK", "Initial height: $initialHeight")
+            Log.d("RE_SDK", "Z-Order on top: $isZOrderOnTop")
             client.onSessionOpened(session)
         }
     }
@@ -97,10 +108,11 @@ class SdkSandboxedUiAdapterImpl(
  * @param mediateeAdapter The UI adapter for a mediatee SDK, if applicable.
  */
 private class SdkUiSession(
-    clientExecutor: Executor,
+    private val clientExecutor: Executor,
     private val sdkContext: Context,
     private val request: SdkBannerRequest,
-    private val mediateeSandboxedUiAdapter: SandboxedUiAdapter?
+    private val mediateeSandboxedUiAdapter: SandboxedUiAdapter?,
+    private val client: SandboxedUiAdapter.SessionClient,
 ) : AbstractSandboxedUiAdapter.AbstractSession() {
 
     private val controller = SdkSandboxControllerCompat.from(sdkContext)
@@ -132,9 +144,7 @@ private class SdkUiSession(
             }
         }
         if (request.isWebViewBannerAd) {
-            val webview = WebView(sdkContext)
-            webview.loadUrl(urls[Random.nextInt(urls.size)])
-            return webview
+            return createWebViewAd()
         }
         return View.inflate(sdkContext, R.layout.banner, null).apply {
             val textView = findViewById<TextView>(R.id.banner_header_view)
@@ -183,5 +193,47 @@ private class SdkUiSession(
         val token = controller.registerSdkSandboxActivityHandler(handler)
         val launched = request.activityLauncher.launchSdkActivity(token)
         if (!launched) controller.unregisterSdkSandboxActivityHandler(handler)
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun createWebViewAd(): WebView {
+        val webView = WebView(sdkContext)
+        val webViewSetting = webView.settings
+        webViewSetting.loadsImagesAutomatically = true
+        webViewSetting.loadWithOverviewMode = true
+        webViewSetting.javaScriptEnabled = true
+        webViewSetting.domStorageEnabled = true
+        webViewSetting.useWideViewPort = true
+
+        WebView.setWebContentsDebuggingEnabled(true)
+        webViewSetting.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
+        CookieManager.getInstance().setAcceptCookie(true)
+        webView.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                // Get the content height of the web page
+                view?.evaluateJavascript("document.body.scrollHeight",
+                    ValueCallback { value ->
+                        val displayMetrics = sdkContext.resources.displayMetrics
+                        val contentHeight = value.toIntOrNull() ?: displayMetrics.heightPixels
+                        clientExecutor.execute {
+                            client.onResizeRequested(displayMetrics.widthPixels, contentHeight)
+                        }
+                        Log.d("RE_SDK", "Height of the scrollable web content: $contentHeight")
+                    })
+            }
+        }
+        webView.webChromeClient = WebChromeClient()
+
+        webView.loadUrl("")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            webView.setOnScrollChangeListener { v, scrollX, scrollY, oldScrollX, oldScrollY ->
+                val deltaY = scrollY - oldScrollY
+                if (webView.scrollY == 0 && deltaY <= 0) {
+                    webView.requestDisallowInterceptTouchEvent(false)
+                }
+            }
+        }
+        return webView
     }
 }

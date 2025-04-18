@@ -32,6 +32,7 @@ coroutines = "1.7.1"
 annotation = "1.6.0"
 kotlinStdlibJdk8 = "1.9.10"
 androidxTestRunner = "1.5.2"
+legacySupportV4 = "1.0.0"
 
 [libraries]
 # Plugins
@@ -68,6 +69,7 @@ sdkruntime-tools-tools = { module = "androidx.privacysandbox.tools:tools", versi
 sdkruntime-tools-apicompiler = { module = "androidx.privacysandbox.tools:tools-apicompiler", version.ref = "sdkRuntimeShim" }
 sdkruntime-tools-apigenerator = { module = "androidx.privacysandbox.tools:tools-apigenerator", version.ref = "sdkRuntimeShim" }
 sdkruntime-tools-apipackager = { module = "androidx.privacysandbox.tools:tools-apipackager", version.ref = "sdkRuntimeShim" }
+androidx-legacy-support-v4 = { group = "androidx.legacy", name = "legacy-support-v4", version.ref = "legacySupportV4" }
 
 [bundles]
 coroutines = ["kotlinx-coroutines-core", "kotlinx-coroutines-android"]
