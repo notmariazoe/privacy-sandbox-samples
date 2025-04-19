@@ -103,7 +103,7 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:fillViewport="false"
+        android:fillViewport="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/linearLayout"
         tools:layout_editor_absoluteX="24dp">
@@ -118,25 +118,25 @@
                 android:id="@+id/textView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="This text represents application native view content\n\n This can be any Android view like TextView and ImageView\n\nUnder this element we will present SandBoxedView\n\nPlease try to scroll and click on the SandboxedSDKView" />
+                android:text="@string/text_placeholder" />
 
             <TextView
                 android:id="@+id/textView2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="This text represents application native view content\n\n This can be any Android view like TextView and ImageView\n\nUnder this element we will present SandBoxedView\n\nPlease try to scroll and click on the SandboxedSDKView" />
+                android:text="@string/text_placeholder" />
 
             <TextView
                 android:id="@+id/textView3"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="This text represents application native view content\n\n This can be any Android view like TextView and ImageView\n\nUnder this element we will present SandBoxedView\n\nPlease try to scroll and click on the SandboxedSDKView" />
+                android:text="@string/text_placeholder" />
 
             <TextView
                 android:id="@+id/textView4"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="This text represents application native view content\n\n This can be any Android view like TextView and ImageView\n\nUnder this element we will present SandBoxedView\n\nPlease try to scroll and click on the SandboxedSDKView" />
+                android:text="@string/text_placeholder" />
 
             <com.runtimeaware.sdk.BannerAd
                 android:id="@+id/banner_ad"

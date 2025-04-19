@@ -16,11 +16,13 @@
 package com.runtimeenabled.implementation
 
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.RemoteException
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.privacysandbox.sdkruntime.core.controller.SdkSandboxControllerCompat
 import androidx.privacysandbox.ui.client.SandboxedUiAdapterFactory
 import androidx.privacysandbox.ui.core.DelegatingSandboxedUiAdapter
@@ -40,6 +42,7 @@ import androidx.privacysandbox.ui.core.SessionObserverContext
 import androidx.privacysandbox.ui.core.SessionObserverFactory
 import androidx.privacysandbox.ui.provider.toCoreLibInfo
 import com.runtimeenabled.api.MediateeAdapterInterface
+import com.runtimeenabled.api.SdkSandboxedUiAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -62,6 +65,7 @@ class SdkServiceImpl(private val context: Context) : SdkService {
 
     override suspend fun getMessage(): String = "Hello from Runtime-enabled SDK!"
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun createFile(sizeInMb: Int): String {
         val path = Paths.get(
             context.applicationContext.dataDir.path, "file.txt"
@@ -112,8 +116,13 @@ class SdkServiceImpl(private val context: Context) : SdkService {
             return delegatingAdapter.toCoreLibInfo(context)
         }
         if (mediationType == context.getString(R.string.mediation_option_none)) {
-            val bannerAdAdapter = SdkSandboxedUiAdapterImpl(context, request, null)
-            bannerAdAdapter.addObserverFactory(SessionObserverFactoryImpl())
+            lateinit var bannerAdAdapter: SdkSandboxedUiAdapter
+            if (request.isWebViewBannerAd) {
+                bannerAdAdapter = ScrollableWebViewUiAdapter(context, request)
+            } else {
+                bannerAdAdapter = SdkSandboxedUiAdapterImpl(context, request, null)
+                bannerAdAdapter.addObserverFactory(SessionObserverFactoryImpl())
+            }
             return bannerAdAdapter.toCoreLibInfo(context)
         }
         // For In-app mediatee, SandboxedUiAdapter returned by mediatee is not wrapped, it is
@@ -188,7 +197,7 @@ class SdkServiceImpl(private val context: Context) : SdkService {
  * This class provides a way to create observers that can monitor the lifecycle of UI sessions
  * and receive updates about UI container changes.
  */
-private class SessionObserverFactoryImpl : SessionObserverFactory {
+internal class SessionObserverFactoryImpl : SessionObserverFactory {
     override fun create(): SessionObserver {
         return SessionObserverImpl()
     }
